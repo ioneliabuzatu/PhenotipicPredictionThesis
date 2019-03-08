@@ -1,0 +1,7 @@
+.idea
+*.py
+.ipynb_checkpoints/
+Untitled*
+regression*
+ukb8627.tab*
+nogitdata
