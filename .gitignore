@@ -1,7 +1,13 @@
 .idea
-*.py
 .ipynb_checkpoints/
 Untitled*
 regression*
 ukb8627.tab*
 nogitdata
+py2_find_field.py
+second_part_v2_grid_search.py
+counting.py
+deleteme1010.txt
+getTrainPheno.ipynb
+makePickle.py
+test.py
