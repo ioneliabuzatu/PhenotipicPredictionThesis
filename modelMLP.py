@@ -41,7 +41,6 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(hidden2_size, output_size) # output # of predicted traits
         self.activation1 = nn.Tanh()
 
-        # TODO: return classifier fro traits
     def forward(self, input):
         input = self.fc1(input)
         input = self.activation1(input)
