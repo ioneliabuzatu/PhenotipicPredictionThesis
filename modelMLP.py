@@ -23,16 +23,14 @@ criterion = nn.MSELoss()
 
 # make data to tensor
 xTrainData = hkl.load('dontPush/bigTraining.hkl')
-print(xTrainData.shape)
+xTrainData  = torch.from_numpy(xTrainData).float()
 yTrainData = pd.read_csv('dontPush/pheno10000.csv', sep="\t")
+yTrainData = torch.tensor(yTrainData["f.4079.0.0"].values).float()
 
 # xTrainData = xTrainData.transpose([1,0,2]).reshape(100,300)
 # print(xTrainData.shape)
-xTrainData  = torch.from_numpy(xTrainData).float()
+# print("the mean of train is {}".format(torch.mean(yTrainData)))
 
-yTrainData = torch.tensor(yTrainData["f.4079.0.0"].values).float()
-
-print("the mean of train is {}".format(torch.mean(yTrainData)))
 
 class Net(nn.Module):
 
@@ -54,11 +52,7 @@ class Net(nn.Module):
 
 
 def train(model, criterion = nn.MSELoss(),  momentum = momentum):
-
     optimiser = optim.SGD(model.parameters(), lr=learning_rate)
-
-    loss_log = []
-
     for epoch in range(epochs):
         for i in range(0, xTrainData.shape[0], batch_size):
 
@@ -76,9 +70,9 @@ def train(model, criterion = nn.MSELoss(),  momentum = momentum):
             loss.backward() # backpropagations
             optimiser.step() # update the parametrs
 
+            # TODO: bug loss
             if i % 100 == 0:
                 print("epoch {}, loss {}".format(epoch, loss.item()))
-
 
 
 def test(model):
@@ -96,6 +90,6 @@ def main():
     testing = test(model)
 
 
-
 if __name__ == '__main__':
     main()
+    # plot loss
