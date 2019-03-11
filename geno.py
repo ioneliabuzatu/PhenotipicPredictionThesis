@@ -40,41 +40,11 @@ tot_snps = snps_shape[1] # 63487
 
 
 # make flat vector
-def toflatgeno(train_subset = 100000, num_snps = 100, snps = snps):
-
-    snps = snps[400:, :50000]
-    makeFlatGeno = [[] for i in range(train_subset)]
-    for patient_id in range(0, train_subset):
-        subset = snps[patient_id, :num_snps]  # get un array af all snps for each patient
-        snp_val = subset.read().val
-        where_are_nan = np.isnan(snp_val)
-        snp_val[where_are_nan] = -1
-
-        i = 0
-        for snp in snp_val[0]:
-            if snp == 0:
-                makeFlatGeno[patient_id].extend([1, 0, 0])
-            elif snp == 1:
-                makeFlatGeno[patient_id].extend([1, 1, 0])
-            elif snp == 2:
-                makeFlatGeno[patient_id].extend([1, 0, 1])
-            else:
-                makeFlatGeno[patient_id].extend([1, 0, 0])
-            i += 1
-    makeFlatGenoNumpy=np.array(makeFlatGeno)
-    return makeFlatGenoNumpy
-
-outputFlat = toflatgeno()
-hkl.dump(outputFlat, 'dontPush/bigTraining.hkl', mode='w')
-
-
-# def make_test(test_subset = 100, num_snps = 100, snps = snps):
+# def toflatgeno(train_subset = 10000, num_snps = 100, snps = snps):
 #
-#     snps  = snps[200:, :]
-#
-#     makeFlatGeno = [[] for i in range(test_subset)]
-#
-#     for patient_id in range(0, test_subset):
+#     snps = snps[400:, :5000]
+#     makeFlatGeno = [[] for i in range(train_subset)]
+#     for patient_id in range(0, train_subset):
 #         subset = snps[patient_id, :num_snps]  # get un array af all snps for each patient
 #         snp_val = subset.read().val
 #         where_are_nan = np.isnan(snp_val)
@@ -92,10 +62,41 @@ hkl.dump(outputFlat, 'dontPush/bigTraining.hkl', mode='w')
 #                 makeFlatGeno[patient_id].extend([1, 0, 0])
 #             i += 1
 #     makeFlatGenoNumpy=np.array(makeFlatGeno)
-#     # print(makeFlatGenoNumpy.shape)
 #     return makeFlatGenoNumpy
 #
-#
-# testOutput = make_test()
+# outputFlat = toflatgeno()
+# hkl.dump(outputFlat, 'dontPush/HugeTraining.hkl', mode='w')
+
+
+def make_test(test_subset = 100, num_snps = 100, snps = snps):
+
+    snps  = snps[20000:, :5000]
+
+    makeFlatGeno = [[] for i in range(test_subset)]
+
+    for patient_id in range(0, test_subset):
+        subset = snps[patient_id, :num_snps]  # get un array af all snps for each patient
+        snp_val = subset.read().val
+        where_are_nan = np.isnan(snp_val)
+        snp_val[where_are_nan] = -1
+
+        i = 0
+        for snp in snp_val[0]:
+            if snp == 0:
+                makeFlatGeno[patient_id].extend([1, 0, 0])
+            elif snp == 1:
+                makeFlatGeno[patient_id].extend([1, 1, 0])
+            elif snp == 2:
+                makeFlatGeno[patient_id].extend([1, 0, 1])
+            else:
+                makeFlatGeno[patient_id].extend([1, 0, 0])
+            i += 1
+    makeFlatGenoNumpy=np.array(makeFlatGeno)
+    # print(makeFlatGenoNumpy.shape)
+    return makeFlatGenoNumpy
+
+
+testOutput = make_test()
 # print(testOutput.shape)
-# hkl.dump(testOutput, 'dontPush/test.hkl', mode='w')
+hkl.dump(testOutput, 'dontPush/testBig.hkl', mode='w')
+
