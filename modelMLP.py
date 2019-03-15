@@ -14,7 +14,7 @@ hidden_size = 100
 hidden2_size = 200
 output_size = 1 # TODO: how many?
 
-epochs = 7
+epochs = 50
 batch_size = 5000
 learning_rate = 0.005
 momentum = 0
@@ -52,6 +52,7 @@ class Net(nn.Module):
 
 def train(model, criterion = nn.MSELoss(),  momentum = momentum):
     optimiser = optim.SGD(model.parameters(), lr=learning_rate)
+    loss_all = []
     for epoch in range(epochs):
         for i in range(0, xTrainData.shape[0], batch_size):
 
@@ -68,10 +69,10 @@ def train(model, criterion = nn.MSELoss(),  momentum = momentum):
             loss = criterion(output, y_var)
             loss.backward() # backpropagations
             optimiser.step() # update the parametrs
-
+            loss_all.append(loss.item())
             # TODO: bug loss
-            if i % 100 == 0:
-                print("epoch {}, loss {}".format(epoch, loss.item()))
+            # if i % 100 == 0:
+        print("epoch {}, loss {}".format(epoch, loss_all.pop()))
 
 
 def test(model):
