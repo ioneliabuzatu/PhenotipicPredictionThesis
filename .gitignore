@@ -12,3 +12,5 @@ getTrainPheno.ipynb
 makePickle.py
 test.py
 dontPush
+__pycache__
+runs
