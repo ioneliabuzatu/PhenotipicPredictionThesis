@@ -15,7 +15,7 @@ tot_snps = snps_shape[1] # 63487
 
 
 def getX(test_subset = subset, num_snps = number_of_snps, snps = snpsFile):
-    # snps  = snps[20000:, :5000]
+    snps  = snps[400:, :5000]
     makeFlatGeno = [[] for i in range(test_subset)]
 
     for patient_id in range(0, test_subset):
@@ -41,5 +41,5 @@ def getX(test_subset = subset, num_snps = number_of_snps, snps = snpsFile):
 
 
 testOutput = getX()
-hkl.dump(testOutput, 'dontPush/test100.hkl', mode='w')
+hkl.dump(testOutput, 'dontPush/geno100000_20000.hkl', mode='w')
 

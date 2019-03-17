@@ -14,3 +14,4 @@ test.py
 dontPush
 __pycache__
 runs
+rnn2.py

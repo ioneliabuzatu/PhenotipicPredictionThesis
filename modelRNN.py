@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import hickle as hkl
 import torch.utils.data
-import tensorboardX
+# import tensorboardX
 
-writer = tensorboardX.SummaryWriter()
+# writer = tensorboardX.SummaryWriter()
 
 # hyperparameters
 input_size = 300
@@ -38,40 +38,63 @@ test_loader = torch.utils.data.DataLoader(test, batch_size=300, shuffle=False, d
 
 
 class RNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_dim=1, tot_layers=2):
+    def __init__(self, input_size, hidden_size, output_dim=1, tot_layers=1):
         super(RNN, self).__init__()
         self.hidden_size = hidden_size # num of hidden dim
         self.tot_layers = tot_layers # num of hidden layers
-        self.rnn = nn.RNN(input_size, hidden_size, tot_layers, batch_first=True, nonlinearity="tanh")  # change it to tanh
+        self.rnn = nn.RNN(input_size, hidden_size,  batch_first=True, nonlinearity="tanh")
 
         self.fc1 = nn.Linear(hidden_size, output_dim)
 
     def forward(self, input):
         h0 = Variable(torch.zeros(self.tot_layers, input.size(0), self.hidden_size))
-        rnn_out, hn = self.rnn(input, h0) # lstm = nn.LSTM(10000, 300)
+        rnn_out, h0 = self.rnn(input, h0) # lstm = nn.LSTM(10000, 300)
         out = self.fc1(rnn_out[:, -1, :])
+
         return out
 
+def get_accuracy(logit, target, batch_size):
+    ''' Obtain accuracy for training round '''
+    corrects = torch.eq(logit, target).sum()
+    accuracy = 100.0 * corrects/batch_size
+    return accuracy.item()
 
-def training(model, train_loader, optimiser, loss_func):
-    loss_tot = []
-    for epoch in range(epochs):
-        for i, (person, bloodP) in enumerate(train_loader):
-            trainX = Variable(person.view(batch_size, 1, -1))
-            targets = Variable(bloodP)
-            # print(targets.size())
-            optimiser.zero_grad()
-            outputs = model(trainX)
-            loss = loss_func(outputs, targets)
+
+def train(model, train_loader, optimizer, criterion):
+    for epoch in range(epochs):  # loop over the dataset multiple times
+        train_running_loss = 0.0
+        train_acc = 0.0
+        model.train()
+
+
+        # TRAINING ROUND
+        for i, data in enumerate(train_loader):
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # get the inputs
+            inputs, labels = data
+            labels = Variable(labels)
+            inputs = Variable(inputs.view(batch_size, 1, -1))
+
+            # forward + backward + optimize
+            outputs = model(inputs)
+
+            loss = criterion(outputs, labels)
             loss.backward()
-            optimiser.step()
-            loss_tot.append(loss.item())
-            writer.add_scalar('data/loss', loss, i + (epoch * len(train_loader)))
-        # print("epoch {}, loss {}".format(epoch, loss_tot.pop()))
+            optimizer.step()
+
+            train_running_loss += loss.detach().item()
+            train_acc += get_accuracy(outputs, labels, batch_size)
+
+        model.eval()
+        print('Epoch:  %d | Loss: %.4f | Train Accuracy: %.2f'
+              % (epoch+1, train_running_loss / i, train_acc / i))
 
 
-def testing(model, train_loader):
-    for i, (persons, bloodP) in enumerate(train_loader):
+# TODO: somethign wrong with the test
+def testing(model, test_loader):
+    for i, (persons, bloodP) in enumerate(test_loader):
         input = Variable(persons.view(batch_size, 1, -1))
         outputs = model(input)
         print(outputs)
@@ -79,26 +102,16 @@ def testing(model, train_loader):
 
 def main(train_loader = train_loader, test_loader = test_loader):
     model = RNN(input_size, hidden_size)
-
     loss1 = torch.nn.MSELoss()
     loss2 = nn.SmoothL1Loss()
-    optimiser1 = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    optimiser2 = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer1 = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer2 = optim.SGD(model.parameters(), lr=learning_rate)
 
-    trained = training(model, train_loader, optimiser = optimiser1, loss_func = loss1)
+    training = train(model, train_loader, optimizer = optimizer1, criterion = loss2)
     # tested = testing(model, test_loader)
 
-    for i, (persons, bloodP) in enumerate(test_loader):
-        persons = Variable(persons.view(batch_size, 1, -1))
-        outputs = model(persons)
-        print(outputs)
 
 
 if __name__ == "__main__":
     main()
 
-
-
-"""Notes: about RNNs
-the probability of keeping the context from a word that is far away from the current word being processed decreases exponentially with the distance from it.
-"""
