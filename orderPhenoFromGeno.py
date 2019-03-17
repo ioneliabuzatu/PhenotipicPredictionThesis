@@ -4,6 +4,7 @@ This is for ordering patients id based on their order in genotypes table with sn
 
 import pandas as pd
 from pysnptools.snpreader import Bed
+import glob
 
 
 snps = Bed('/Users/ioneliabuzatu/PycharmProjects/biobank/nogitdata/ukb_cal_chr1_v2',count_A1=False)
@@ -16,7 +17,7 @@ for patient in snps.iid[400:10400]:
 
 
 data = pd.read_csv('regression/full_phenotype_may', sep=" ")
-# create empty df to store the final file
+# create df with header to store the final file
 final_df = data.loc[data["f.eid"] == idOrder[0]]
 
 for row in idOrder[1:]:
@@ -27,4 +28,12 @@ for row in idOrder[1:]:
 
 final_df = final_df.fillna(final_df.mean())
 final_df = final_df.iloc[:, 1:2] # unlike loc, iloc keeps the header
-final_df.to_csv("dontPush/pheno10000.csv", sep='\t', index=False)
+filename = "dontPush/pheno10000.csv"
+fileISpresent = glob.glob(filename)
+
+
+if not fileISpresent:
+    try:
+        final_df.to_csv("dontPush/pheno10000.csv", sep='\t', index=False)
+    except FileExistsError:
+        print("WARNING: this file already exists!")
