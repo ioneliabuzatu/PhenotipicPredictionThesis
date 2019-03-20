@@ -15,3 +15,7 @@ dontPush
 __pycache__
 runs
 rnn2.py
+deletedFiles
+delete.py
+
+
