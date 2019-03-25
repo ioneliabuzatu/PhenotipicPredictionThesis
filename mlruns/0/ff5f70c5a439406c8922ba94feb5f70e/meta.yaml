@@ -1,0 +1,14 @@
+artifact_uri: /Users/ioneliabuzatu/PycharmProjects/biobank/mlruns/0/ff5f70c5a439406c8922ba94feb5f70e/artifacts
+end_time: 1553274617382
+entry_point_name: ''
+experiment_id: 0
+lifecycle_stage: active
+name: ''
+run_uuid: ff5f70c5a439406c8922ba94feb5f70e
+source_name: /Users/ioneliabuzatu/PycharmProjects/biobank/model.py
+source_type: 4
+source_version: df70bb465013212845ab25c7ed40bd6ef51e89a2
+start_time: 1553274613225
+status: 3
+tags: []
+user_id: ioneliabuzatu

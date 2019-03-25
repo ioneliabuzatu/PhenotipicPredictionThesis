@@ -8,115 +8,99 @@ import numpy as np
 import matplotlib.pyplot as plt
 import hickle as hkl
 import torch.utils.data
-# import tensorboardX
+import tensorboardX
 
-# writer = tensorboardX.SummaryWriter()
+writer = tensorboardX.SummaryWriter()
 
 # hyperparameters
-input_size = 301
-hidden_size = 300
-batch_size = 300
+hidden_size = 50
+batch_size = 1
 epochs = 100
-learning_rate = 0.005
+learning_rate = 0.05
 
 
-# loading data into train and test
-trainX = hkl.load('dontPush/bigTraining.hkl')
-trainX = torch.from_numpy(trainX).float()
-trainY = pd.read_csv('dontPush/pheno10000.csv', sep="\t")
-trainY = torch.tensor(trainY["f.4079.0.0"].values).float()
+def loader_data():
+    # data loading: train and test
+    trainX = hkl.load('dontPush/geno200X500.hkl')
+    trainX = torch.from_numpy(trainX).float()
+    trainY = pd.read_csv('dontPush/pheno200X500.csv', sep="\t")
+    trainY = torch.tensor(trainY["f.4079.0.0"].values).float().unsqueeze(-1)
+    y_mean = trainY.mean()
+    y_var = trainY.var()
+    concatXY = np.column_stack((trainX, trainY))
+    concatXY = torch.from_numpy(concatXY)
+    x_mean = trainX.mean(dim=0)
+    x_var = trainX.var(dim=0)
 
-#### for debuggin
-concatXY = np.column_stack((trainX, trainY))
-concatXY = torch.from_numpy(concatXY)
-# print(concatXY.shape)
-x = torch.ones_like(trainX)
-y = torch.ones_like(trainY)
-train = torch.utils.data.TensorDataset(concatXY,trainY)
-train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False, drop_last=True)  # train_loader ready
+    # normalization for x and y
+    trainX -= trainX.mean(dim=0)
+    trainX /= trainX.var(dim=0) + 1e-10
+    trainY -= trainY.mean()
+    trainY /= trainY.var()
+    concatXY -= concatXY.mean(dim=0)
+    concatXY /= concatXY.var(dim=0)
 
-
-features_test = hkl.load("dontPush/test100.hkl")
-features_test = torch.from_numpy(features_test).float()
-targets_test = pd.read_csv("dontPush/pheno100.csv", sep="\t")
-targets_test = torch.tensor(targets_test['f.4079.0.0'].values).type(torch.LongTensor)
-test = torch.utils.data.TensorDataset(features_test, targets_test)
-test_loader = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=False, drop_last=True) # test_loader ready
+    train = torch.utils.data.TensorDataset(trainX, trainY)
+    loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False, drop_last=True)
+    return loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var
 
 
 class RNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_dim=1, tot_layers=1):
         super(RNN, self).__init__()
-        self.hidden_size = hidden_size # num of hidden dim
-        self.tot_layers = tot_layers # num of hidden layers
-        self.rnn = nn.RNN(input_size, hidden_size,  batch_first=True, nonlinearity="tanh")
-        self.fc1 = nn.Linear(hidden_size, output_dim)
+        self.hidden_size = hidden_size  # num of hidden dim
+        self.tot_layers = tot_layers  # num of hidden layers
+        self.rnn = nn.LSTM(hidden_size, output_dim, batch_first=True, nonlinearity="tanh")
+        self.fc1 = nn.Linear(input_size, hidden_size)
 
     def forward(self, input):
         h0 = Variable(torch.zeros(self.tot_layers, input.size(0), self.hidden_size))
-        rnn_out, h0 = self.rnn(input, h0) # lstm = nn.LSTM(10000, 300)
-        out = self.fc1(rnn_out[:, -1, :])  # why am I using a fully connected here?
+
+        # processing feed-forward layers first improves learning
+        first_fc = self.fc1(input)
+        out, h0 = self.rnn(first_fc, h0)
+        # rnn_out, h0 = self.rnn(input, h0)
+        # out = self.fc1(rnn_out[:, -1, :])
 
         return out
 
-def get_accuracy(logit, target, batch_size):
-    ''' Obtain accuracy for training round '''
-    corrects = torch.eq(logit, target).sum()
-    accuracy = 100.0 * corrects/batch_size
-    return accuracy.item()
+
+data_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = loader_data()
+net = RNN(x_features, y_features)
+criterion = nn.SmoothL1Loss()
+doesitwork = nn.MSELoss()
+optimizer = optim.Adam(net.parameters())
 
 
-def train(model, train_loader, optimizer, criterion):
-    for epoch in range(epochs):  # loop over the dataset multiple times
-        train_running_loss = 0.0
-        train_acc = 0.0
-        model.train()
+for epoch in range(epochs):
+    loss = 0
+    for i, data in enumerate(data_loader):
+        step = epoch * len(data_loader) + 1
+        inputs, labels = data
 
-        # epoch round
-        for i, data in enumerate(train_loader):
-            # zero the parameter gradients
-            optimizer.zero_grad()
+        inputs = Variable(inputs.view(batch_size, 1, -1))
+        labels = Variable(labels)
 
-            # get the inputs
-            inputs, labels = data
-            labels = Variable(labels)
-            inputs = Variable(inputs.view(batch_size, 1, -1))
+        prediction = net(inputs)
 
-            # forward + backward + optimize
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+        original_prediction = prediction * y_var + y_mean
+        original_label = labels * y_var + y_mean
+        if epoch == epochs -1:
+            print(original_prediction, original_label)
 
+        visual_loss = doesitwork(original_label, original_prediction)
+        writer.add_scalar('Train/doesitwork', visual_loss, step)
 
-            train_running_loss += loss.detach().item()
-            train_acc += get_accuracy(outputs, labels, batch_size)
+        l = criterion(prediction, labels)
+        loss += l
 
-        model.eval()
-        print('Epoch:  %d | Loss: %.4f | Train Accuracy: %.2f'
-              % (epoch+1, train_running_loss / i, train_acc / i))
+        optimizer.zero_grad()
+        l.backward()
+        optimizer.step()
 
+        writer.add_scalar('Train/l', l.item(), step)
 
-# TODO: something wrong with the test
-def testing(model, test_loader):
-    for i, (persons, bloodP) in enumerate(test_loader):
-        input = Variable(persons.view(batch_size, 1, -1))
-        outputs = model(input)
-        print(outputs)
-
-
-def main(train_loader = train_loader, test_loader = test_loader):
-    model = RNN(input_size, hidden_size)
-    loss1 = torch.nn.MSELoss()
-    loss2 = nn.SmoothL1Loss()
-    optimizer1 = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer2 = optim.SGD(model.parameters(), lr=learning_rate)
-
-    training = train(model, train_loader, optimizer = optimizer1, criterion = loss2)
-    # tested = testing(model, test_loader)
-
-    # for param in model.parameters():
-    #     print(param.data)
-
-if __name__ == "__main__":
-    main()
+    writer.add_scalar('Epoch/Loss', loss, epoch)
+    print('Epoch:  %d | Loss: %.4f' % (epoch + 1, loss))
 
 
