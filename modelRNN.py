@@ -1,3 +1,4 @@
+# import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,40 +10,16 @@ import matplotlib.pyplot as plt
 import hickle as hkl
 import torch.utils.data
 import tensorboardX
+from dataLoaders import train_data
+
 
 writer = tensorboardX.SummaryWriter()
 
 # hyperparameters
 hidden_size = 50
-batch_size = 1
+batch_size = 5
 epochs = 100
-learning_rate = 0.05
-
-
-def loader_data():
-    # data loading: train and test
-    trainX = hkl.load('dontPush/geno200X500.hkl')
-    trainX = torch.from_numpy(trainX).float()
-    trainY = pd.read_csv('dontPush/pheno200X500.csv', sep="\t")
-    trainY = torch.tensor(trainY["f.4079.0.0"].values).float().unsqueeze(-1)
-    y_mean = trainY.mean()
-    y_var = trainY.var()
-    concatXY = np.column_stack((trainX, trainY))
-    concatXY = torch.from_numpy(concatXY)
-    x_mean = trainX.mean(dim=0)
-    x_var = trainX.var(dim=0)
-
-    # normalization for x and y
-    trainX -= trainX.mean(dim=0)
-    trainX /= trainX.var(dim=0) + 1e-10
-    trainY -= trainY.mean()
-    trainY /= trainY.var()
-    concatXY -= concatXY.mean(dim=0)
-    concatXY /= concatXY.var(dim=0)
-
-    train = torch.utils.data.TensorDataset(trainX, trainY)
-    loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=False, drop_last=True)
-    return loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var
+learning_rate = 0.1
 
 
 class RNN(nn.Module):
@@ -50,7 +27,7 @@ class RNN(nn.Module):
         super(RNN, self).__init__()
         self.hidden_size = hidden_size  # num of hidden dim
         self.tot_layers = tot_layers  # num of hidden layers
-        self.rnn = nn.LSTM(hidden_size, output_dim, batch_first=True, nonlinearity="tanh")
+        self.rnn = nn.RNN(hidden_size, output_dim, batch_first=True, nonlinearity="tanh")
         self.fc1 = nn.Linear(input_size, hidden_size)
 
     def forward(self, input):
@@ -65,7 +42,7 @@ class RNN(nn.Module):
         return out
 
 
-data_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = loader_data()
+train_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = train_data()
 net = RNN(x_features, y_features)
 criterion = nn.SmoothL1Loss()
 doesitwork = nn.MSELoss()
@@ -74,8 +51,8 @@ optimizer = optim.Adam(net.parameters())
 
 for epoch in range(epochs):
     loss = 0
-    for i, data in enumerate(data_loader):
-        step = epoch * len(data_loader) + 1
+    for i, data in enumerate(train_loader):
+        step = epoch * len(train_loader) + 1
         inputs, labels = data
 
         inputs = Variable(inputs.view(batch_size, 1, -1))
@@ -85,8 +62,8 @@ for epoch in range(epochs):
 
         original_prediction = prediction * y_var + y_mean
         original_label = labels * y_var + y_mean
-        if epoch == epochs -1:
-            print(original_prediction, original_label)
+        # if epoch == epochs -1:
+        #     print(original_prediction, original_label)
 
         visual_loss = doesitwork(original_label, original_prediction)
         writer.add_scalar('Train/doesitwork', visual_loss, step)
@@ -104,3 +81,36 @@ for epoch in range(epochs):
     print('Epoch:  %d | Loss: %.4f' % (epoch + 1, loss))
 
 
+"""
+net.load_state_dict(torch.load('model_RNN.ckpt'))
+
+with torch.no_grad():
+    test_loss_tot = 0
+    accuracy = 0
+    i = 0
+    for id, pressure in test_loader:
+
+        id = id.view(batch_size, 1, -1)
+
+        test_prediction = net(id)
+
+        original_prediction = test_prediction * y_var + y_mean
+        original_label = pressure * y_var + y_mean
+
+        test_loss = criterion(original_prediction, pressure)
+        test_loss_tot += test_loss
+
+        # plot test loss
+        writer.add_scalar('Test/Loss', test_loss, i)
+
+        i+=1 # needed for plotting loss at each step
+
+        print(original_prediction, pressure)
+
+    print("test loss is {}".format(test_loss_tot))
+
+
+# Save and load only the model parameters
+# torch.save(net.state_dict(), 'paramsRNN.ckpt')
+# net.load_state_dict(torch.load('paramsRNN.ckpt'))
+"""

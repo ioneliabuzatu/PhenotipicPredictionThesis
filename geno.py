@@ -17,5 +17,5 @@ except OSError:
     getX01 = getX01()
     hkl.dump(getX01, 'dontPush/testDELETE.hkl', mode='w')
 
-# original = getXoriginal()
+original = getXoriginal()
 # hkl.dump(original, 'dontPush/test_geno100X500_012.hkl', mode='w')
