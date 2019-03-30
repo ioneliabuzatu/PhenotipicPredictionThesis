@@ -21,3 +21,4 @@ colab.tar
 mlruns
 modelWeights
 modelMLP.py
+nohup.out

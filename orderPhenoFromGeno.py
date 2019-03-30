@@ -10,7 +10,7 @@ import glob
 snps = Bed('/Users/ioneliabuzatu/PycharmProjects/biobank/nogitdata/ukb_cal_chr1_v2',count_A1=False)
 # the exact order from genotype table
 idOrder = [] # samples id to be retrived
-for patient in snps.iid[400:2900]:
+for patient in snps.iid[:40000]:
     id = patient[0].decode('utf8').strip()  # for binary stored indexes
     id = int(id)
     idOrder.append(id)
@@ -28,7 +28,7 @@ for row in idOrder[1:]:
 
 final_df = final_df.fillna(final_df.mean())
 final_df = final_df.iloc[:, 1:2] # unlike loc, iloc keeps the header
-filename = "dontPush/pheno2500X5000_012.csv"
+filename = "dontPush/pheno40kX10k_012.csv"
 fileISpresent = glob.glob(filename)
 
 

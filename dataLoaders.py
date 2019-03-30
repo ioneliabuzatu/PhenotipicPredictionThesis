@@ -7,9 +7,9 @@ import torch.utils.data
 
 def train_data():
     # data loading: train and test
-    trainX = hkl.load('dontPush/geno2500X5000_012.hkl')
+    trainX = hkl.load('dontPush/geno40kX10k_012.hkl')
     trainX = torch.from_numpy(trainX).float()
-    trainY = pd.read_csv('dontPush/pheno2500X5000_012.csv', sep="\t")
+    trainY = pd.read_csv('dontPush/pheno40kX10k_012.csv', sep="\t")
     trainY = torch.tensor(trainY["f.4079.0.0"].values).float().unsqueeze(-1)
     y_mean = trainY.mean()
     y_var = trainY.var()

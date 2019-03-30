@@ -3,7 +3,6 @@ from fullyConnected import criterion, model, writer
 import torch
 import torch.nn as nn
 
-
 test_loader, x_mean, x_var, y_mean, y_var = test_data()
 
 try:
@@ -13,16 +12,12 @@ except FileNotFoundError:
     print("WARNING: file 'modelWeights/paramsFC.ckpt' not found ")
 
 
-
-
-
-def testingFC(net):
+def testing_fc(net):
     with torch.no_grad():
         test_loss_tot = 0
         accuracy = 0
         i = 0
         for inputs, labels in test_loader:
-
             prediction = net(inputs)
 
             original_prediction = prediction * y_var + y_mean
@@ -37,6 +32,5 @@ def testingFC(net):
         return test_loss_tot
 
 
-
 if __name__ == "__main__":
-    testingFC(model)
+    testing_fc(model)

@@ -16,10 +16,10 @@ from dataLoaders import train_data, test_data
 writer = tensorboardX.SummaryWriter()
 
 # parameters
-hidden_size = 1000
-batch_size = 10
+hidden_size = 2000
+batch_size = 40
 epochs = 100
-learning_rate = 0.0001  # decrease lr if loss increases, or increase lr if loss decreases.
+learning_rate = 0.0005  # decrease lr if loss increases, or increase lr if loss decreases.
 
 
 class FC(nn.Module):
@@ -67,7 +67,7 @@ def training(net, loader, optimizer):
             optimizer.step()
             #        writer.add_scalar('Train/weights', net.predict.weight[-1], epoch)
 
-            writer.add_scalar('TrainFC/Loss', l.item(), step)
+            writer.add_scalar('TrainFC/Step/Loss', l.item(), step)
             # net.log_weights(step)
 
         writer.add_scalar('Epoch/TrainFc/Loss', loss, epoch)
@@ -83,7 +83,7 @@ train_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = train_data(
 model = FC(x_features, y_features)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 training(model, train_loader, optimizer)
-# torch.save(model.state_dict(), 'modelWeights/paramsFC.ckpt')
+torch.save(model.state_dict(), 'modelWeights/paramsFC.ckpt')
 # try:
 #     model.load_state_dict(torch.load('paramsFC.ckpt'))
 # except FileNotFoundError:
@@ -94,23 +94,3 @@ training(model, train_loader, optimizer)
 
 test_loader, test_x_mean, test_x_var, test_y_mean, test_y_var = test_data()
 
-# with torch.no_grad():
-#     test_loss_tot = 0
-#     accuracy = 0
-#
-#     i = 0
-#     for inp, lab in test_loader:
-#         # inputs = inputs
-#         # labels = inputs
-#
-#         predictioN = model(inp)
-#
-#         original_predictioN = predictioN * test_y_var + test_y_mean
-#         # original_labeL = lab * y_var + y_mean
-#         test_loss = testLoss(original_predictioN, lab)
-#         test_loss_tot += test_loss
-#         # print(original_predictioN, lab)
-#         writer.add_scalar("TestFC/Loss", test_loss, i)
-#         i += 1
-
-    # print(test_loss_tot)
