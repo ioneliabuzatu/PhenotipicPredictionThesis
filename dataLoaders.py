@@ -3,13 +3,13 @@ import hickle as hkl
 import pandas as pd
 import numpy as np
 import torch.utils.data
-
+from config import train_geno, train_pheno, test_geno, test_pheno
 
 def train_data():
     # data loading: train and test
-    trainX = hkl.load('dontPush/geno40kX10k_012.hkl')
+    trainX = hkl.load(train_geno)
     trainX = torch.from_numpy(trainX).float()
-    trainY = pd.read_csv('dontPush/pheno40kX10k_012.csv', sep="\t")
+    trainY = pd.read_csv(train_pheno, sep="\t")
     trainY = torch.tensor(trainY["f.4079.0.0"].values).float().unsqueeze(-1)
     y_mean = trainY.mean()
     y_var = trainY.var()
@@ -28,14 +28,14 @@ def train_data():
 
     train = torch.utils.data.TensorDataset(trainX, trainY)
     # TODO: think of a way to import only once batch_size evrywhere
-    train_loader = torch.utils.data.DataLoader(train, batch_size=10, shuffle=False, drop_last=True)
+    train_loader = torch.utils.data.DataLoader(train, batch_size=1, shuffle=False, drop_last=True)
     return train_loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var
 
 
 def test_data():
-    testX = hkl.load("dontPush/test_geno100X500_012.hkl")
+    testX = hkl.load(test_geno)
     testX = torch.from_numpy(testX).float()
-    testY = pd.read_csv('dontPush/test_pheno100X500.csv', sep="\t")
+    testY = pd.read_csv(test_pheno, sep="\t")
     testY = torch.tensor(testY["f.4079.0.0"].values).float().unsqueeze(-1)
 
     # get means and vars
@@ -51,5 +51,8 @@ def test_data():
     # testY /= testY.var()
 
     test = torch.utils.data.TensorDataset(testX, testY)
-    test_loader = torch.utils.data.DataLoader(test, batch_size=5, shuffle=False, drop_last=True)
+    test_loader = torch.utils.data.DataLoader(test, batch_size=1, shuffle=False, drop_last=True)
     return test_loader, x_mean, x_var, y_mean, y_var
+
+train_data()
+test_data()

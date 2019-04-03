@@ -5,12 +5,6 @@ import torch.nn as nn
 
 test_loader, x_mean, x_var, y_mean, y_var = test_data()
 
-try:
-    model.load_state_dict(torch.load('modelWeights/paramsFC.ckpt'))
-    # net = torch.load('modelWeights/paramsFC.ckpt')
-except FileNotFoundError:
-    print("WARNING: file 'modelWeights/paramsFC.ckpt' not found ")
-
 
 def testing_fc(net):
     with torch.no_grad():
@@ -25,7 +19,7 @@ def testing_fc(net):
             test_loss = criterion(original_prediction, labels)
             test_loss_tot += test_loss
             print(original_prediction, labels)
-            writer.add_scalar("TestFC/Loss", test_loss, i)
+            writer.add_scalar("/Step/Loss", test_loss.item(), i)
             i += 1
 
         print("test loss is {}".format(test_loss_tot))
@@ -33,4 +27,10 @@ def testing_fc(net):
 
 
 if __name__ == "__main__":
+    # double check parameters file exists
+    try:
+        model.load_state_dict(torch.load('modelWeights/paramsFC.ckpt'))
+    except FileNotFoundError:
+        print("WARNING: file 'modelWeights/paramsFC.ckpt' not found ")
+
     testing_fc(model)

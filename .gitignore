@@ -22,3 +22,4 @@ mlruns
 modelWeights
 modelMLP.py
 nohup.out
+config.py
