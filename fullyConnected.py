@@ -1,23 +1,16 @@
+import tensorboardX
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torch.autograd import Variable
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import hickle as hkl
 import torch.utils.data
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
-import tensorboardX
-from dataLoaders import train_data, test_data
+
+from dataLoaders import train_data
 
 writer = tensorboardX.SummaryWriter()
 
 # parameters
-hidden_size = 1  # maybe 2000 is too big, try with smaller size
-batch_size = 5
+hidden_size = 100  # maybe 2000 is too big, try with smaller size
+batch_size = 50
 epochs = 100
 learning_rate = 0.0001  # decrease lr if loss increases, or increase lr if loss decreases.
 
@@ -29,14 +22,13 @@ class FC(nn.Module):
         self.predict = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        # x = F.leaky_relu(self.hidden(x))
         x = self.hidden(x)
-        x = self.predict(x)
+        x = torch.tanh(self.predict(x))
         return x
 
 
 criterion = nn.SmoothL1Loss()
-testLoss = nn.MSELoss()
+msl = nn.MSELoss()
 doesitwork = nn.L1Loss()
 
 
@@ -44,6 +36,7 @@ def training(net, loader, optimizer):
     data_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = train_data()
     for epoch in range(epochs):
         loss = 0
+        loss_denormalized = 0
         for i, data in enumerate(data_loader):
             step = epoch * len(data_loader) + i
             inputs, labels = data
@@ -54,11 +47,12 @@ def training(net, loader, optimizer):
             original_label = labels * y_var + y_mean
             # if epoch == epochs - 1:
             #     print(original_prediction, original_label)
-            # # visual_loss = doesitwork(original_label, original_prediction)
+            visual_loss = criterion(original_label, original_prediction)
             # writer.add_scalar('Train/doesitwork', visual_loss, step)
+            loss_denormalized += visual_loss
 
             l = criterion(prediction, labels)
-            loss += l
+            loss += l * labels.size(0)
 
             # backpropagation
             optimizer.zero_grad()
@@ -66,11 +60,12 @@ def training(net, loader, optimizer):
             optimizer.step()
             #        writer.add_scalar('Train/weights', net.predict.weight[-1], epoch)
 
-            writer.add_scalar('/Step/Loss', l.item(), step)
+            # writer.add_scalar('/Step/Loss', l.item(), step)
             # net.log_weights(step)
 
-        writer.add_scalar('Epoch/TrainFc/Loss', loss, epoch)
-        print('Epoch:  %d | Loss: %.4f ' % (epoch + 1, loss.item()))
+        # writer.add_scalar('Epoch/TrainFc/deno', loss_denormalized, epoch)
+        # writer.add_scalar('Epoch/TrainFc/Loss', loss, epoch)
+        print('Epoch:  %d | Loss: %.4f ' % (epoch + 1, loss))
 
     return "Finished Training"
 
@@ -85,3 +80,5 @@ try:
 except FileNotFoundError:
     training(model, train_loader, optimizer)
     torch.save(model.state_dict(), 'modelWeights/paramsFC.ckpt')
+
+# training(model, train_loader, optimizer)

@@ -14,15 +14,15 @@ from config import snpsreader, samples, num_snps, train_loop_samples, test_loop_
 
 
 def get_original(snps=snpsreader):  # 3000 x 60000
-    num_samples = 500
+    num_samples = 450
     num_snps = 6000
     print('allocating memory')
     # first this one and 5 is the known  beforehand numbers colunmsn
     totdataset012 = np.array([], dtype=np.int64).reshape(0, 6000)
     dataset = np.zeros(shape=(num_samples, num_snps))  # then always use this one
     print('done')
-    diskmemorySTART = 100000
-    diskmemorySTOP = 100500
+    diskmemorySTART = 200000
+    diskmemorySTOP = 200450
 
     for sample in tqdm.tqdm(range(train_loop_samples)):
         subset = snps[diskmemorySTART:diskmemorySTOP, :num_snps]
@@ -36,8 +36,8 @@ def get_original(snps=snpsreader):  # 3000 x 60000
                 else:
                     dataset[patient_id][offset] = 5  # substitute nan's by 5
                 offset += 1
-        diskmemorySTART += 500
-        diskmemorySTOP += 500
+        diskmemorySTART += 450
+        diskmemorySTOP += 450
         totdataset012 = np.vstack([totdataset012, dataset])
 
     return totdataset012

@@ -57,6 +57,11 @@ def test_data():
     return test_loader, x_mean, x_var, y_mean, y_var, len(testY)
 
 
+def validation_data():
+    pass
+
+
+# not certain if there is a stats bug here
 def train_val_test():
     """
     :return: trainining, validation and test sets, of length 0.8, 0.1, 0.1
@@ -107,6 +112,8 @@ def train_val_test():
     return train_loader, validation_loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var
 
 
-train_data()
-test_data()
-train_val_test()
+
+if __name__ == "__main__":
+    train_data()
+    test_data()
+    train_val_test()

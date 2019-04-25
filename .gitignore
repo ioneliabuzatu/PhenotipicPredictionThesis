@@ -23,3 +23,5 @@ modelWeights
 modelMLP.py
 nohup.out
 config.py
+chroms
+test4layers
