@@ -13,7 +13,7 @@ from dataLoaders import train_data, test_data, train_val_test
 from torch.utils import data
 
 writer = tensorboardX.SummaryWriter()
-
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # 3000 * 6000
 class CNN(nn.Module):
@@ -27,7 +27,7 @@ class CNN(nn.Module):
         self.conv1 = nn.Conv1d(1, 4, kernel_size=self.kernel_size, stride=5, padding=self.paddings)
         self.pool = nn.MaxPool1d(kernel_size=self.kernel_size, stride=3, padding=self.paddings)
         self.conv2 = nn.Conv1d(4, 16, kernel_size=self.kernel_size, stride=3, padding=self.paddings)
-        self.fc1 = nn.Linear(2144 * 1, 200)
+        self.fc1 = nn.Linear(2144, 200)
         self.fc2 = nn.Linear(200, 1)
 
     def forward(self, x):
@@ -56,6 +56,7 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 net = CNN()
+net = net.to(device)
 
 epochs = 100
 learning_rate = 0.0001
@@ -81,12 +82,15 @@ mean = nn.MSELoss()
 # Optimizer
 optimizer = optim.Adam(net.parameters(), lr=learning_rate)
 
+torch.backends.cudnn.benchmark = True
+
 for epoch in range(epochs):
     train_loss = 0  # sum all the losses and divide by the number of batches
     deno_loss = 0
     for i, data in enumerate(train_loader):
         train_step = epoch * len(train_loader) + i
         inputs, labels = data
+        inputs, labels = inputs.to(device), labels.to(device)
         inputs, labels = Variable(inputs), Variable(labels)
 
         optimizer.zero_grad()
@@ -115,6 +119,7 @@ for epoch in range(epochs):
     for i, data in enumerate(validation_loader):
         step_val = epoch * len(train_loader) + i
         input, label = data
+        input, label = input.to(device), label.to(device)
         output = net(input)
 
         loss_validation = criterion(output, label)
