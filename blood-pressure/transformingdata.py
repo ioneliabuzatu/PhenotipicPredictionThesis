@@ -1,28 +1,18 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.autograd import Variable
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import hickle as hkl
-import torch.utils.data
-from pysnptools.snpreader import Bed, Pheno
 import tqdm
-from config import snpsreader, samples, num_snps, train_loop_samples, test_loop_samples
+from config import snpsreader, train_loop_samples
 
 
 def get_original(snps=snpsreader):  # 3000 x 60000
-    num_samples = 450
-    num_snps = 6000
+    num_samples = 500
+    num_snps = 60000
     print('allocating memory')
     # first this one and 5 is the known  beforehand numbers colunmsn
-    totdataset012 = np.array([], dtype=np.int64).reshape(0, 6000)
+    totdataset012 = np.array([], dtype=np.int64).reshape(0, 60000)
     dataset = np.zeros(shape=(num_samples, num_snps))  # then always use this one
     print('done')
-    diskmemorySTART = 200000
-    diskmemorySTOP = 200450
+    diskmemorySTART = 0
+    diskmemorySTOP = 500
 
     for sample in tqdm.tqdm(range(train_loop_samples)):
         subset = snps[diskmemorySTART:diskmemorySTOP, :num_snps]
@@ -36,8 +26,8 @@ def get_original(snps=snpsreader):  # 3000 x 60000
                 else:
                     dataset[patient_id][offset] = 5  # substitute nan's by 5
                 offset += 1
-        diskmemorySTART += 450
-        diskmemorySTOP += 450
+        diskmemorySTART += 500
+        diskmemorySTOP += 500
         totdataset012 = np.vstack([totdataset012, dataset])
 
     return totdataset012
