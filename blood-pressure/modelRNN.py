@@ -2,13 +2,8 @@ import os
 import sys
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import hickle as hkl
 import torch.utils.data
 import tensorboardX
 from dataLoaders import train_data

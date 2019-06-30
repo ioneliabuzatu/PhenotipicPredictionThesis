@@ -1,7 +1,6 @@
 """Testing RNN"""
 
 import torch
-import torch.nn as nn
 from dataLoaders import test_data
 
 test_loader, x_mean, x_var, y_mean, y_var = test_data()

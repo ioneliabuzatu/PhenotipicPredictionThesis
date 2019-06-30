@@ -3,14 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.utils.data
-import pandas as pd
 import numpy as np
-from torch.utils.data.sampler import SubsetRandomSampler
-import hickle as hkl
-import torchvision.transforms as transforms
 import tensorboardX
-from dataLoaders import train_data, test_data, train_val_test
-from torch.utils import data
+from dataLoaders import train_data, test_data
 
 writer = tensorboardX.SummaryWriter()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu') # Device configuration
@@ -65,7 +60,7 @@ net = net.to(device)
 epochs = 100
 learning_rate = 0.0001
 
-train_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = train_data()
+train_loader, x_features, y_features, x_mean, x_var, y_mean, y_var, lenY_train = train_data()
 validation_loader, x_mean, x_var, y_mean, y_var, lenY_validation = test_data()
 
 # train, validation and test sets with length
@@ -75,7 +70,6 @@ validation_loader, x_mean, x_var, y_mean, y_var, lenY_validation = test_data()
 # train_loader, validation_loader, x_features, y_features, x_mean, x_var, y_mean, y_var = train_val_test()
 
 # alternative
-from sklearn.model_selection import train_test_split
 # X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # criterion = nn.SmoothL1Loss()
@@ -133,7 +127,7 @@ for epoch in range(epochs):
     # writer.add_scalar('Epoch/TrainFc/deno', deno_loss, epoch)
     writer.add_scalar('Epoch/Loss', train_loss, epoch)
     writer.add_scalar('Epoch/Loss', val_loss, epoch)
-    print('Epoch:  %d/100 | Train Loss: %.4f  | Val Loss: %.4f' % (epoch + 1, train_loss, val_loss))
+    print('Epoch:  %d/100 | Train Loss: %.4f  | Val Loss: %.4f' % (epoch + 1, train_loss/lenY_train, val_loss/lenY_validation))
 
 
 """

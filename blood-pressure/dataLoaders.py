@@ -6,6 +6,8 @@ import torch.utils.data
 from torch.utils.data.sampler import SubsetRandomSampler
 from config import train_geno, train_pheno, test_geno, test_pheno
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
 def train_data():
     trainX = hkl.load(train_geno)
@@ -30,7 +32,11 @@ def train_data():
     train = torch.utils.data.TensorDataset(trainX, trainY)
     # TODO: think of a way to import only once batch_size evrywhere
     train_loader = torch.utils.data.DataLoader(train, batch_size=1, shuffle=False, drop_last=True)
-    return train_loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var
+    return train_loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var, len(trainY)
+
+
+def validation_data():
+    pass
 
 
 def test_data():
@@ -48,17 +54,13 @@ def test_data():
     # normalization for x and y
     testX -= testX.mean()
     testX /= testX.var()
-    # testY -= testY.mean()
-    # testY /= testY.var()
+    testY -= testY.mean()
+    testY /= testY.var()
 
     test = torch.utils.data.TensorDataset(testX, testY)
-    test_loader = torch.utils.data.DataLoader(test, batch_size=50, shuffle=False, drop_last=True)
+    test_loader = torch.utils.data.DataLoader(test, batch_size=1, shuffle=False, drop_last=True)
 
     return test_loader, x_mean, x_var, y_mean, y_var, len(testY)
-
-
-def validation_data():
-    pass
 
 
 # not certain if there is a stats bug here
@@ -110,7 +112,6 @@ def train_val_test():
                                               sampler=test_sampler, drop_last=True)
 
     return train_loader, validation_loader, trainX.shape[1], trainY.shape[1], x_mean, x_var, y_mean, y_var
-
 
 
 if __name__ == "__main__":
