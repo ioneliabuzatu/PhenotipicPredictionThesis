@@ -5,7 +5,7 @@ Phenotypic predictions with Deep Learning
 Phenotypes Predicted:
 ````
 Blood Presure - Dystolic and Systolic
-Obesity CLassfier (only 20/20 % due to gennotype)
+Obesity CLassfier (only 20/20 % due to genotype)
 ````
 
 
